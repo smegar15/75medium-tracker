@@ -212,12 +212,20 @@ def test_verify_next_day():
         response = requests.get(f"{BASE_URL}/today", timeout=10)
         if response.status_code == 200:
             data = response.json()
-            # Should be day 2 now
+            # The issue: since we're on the same calendar date, the day_number doesn't increment
+            # This is a design issue - the API should either:
+            # 1. Update the existing log's day_number when state increments, OR
+            # 2. Use a different mechanism for tracking challenge days vs calendar days
+            
             if data.get('day_number') == 2:
                 results.log_pass("Verify next day (Day 2)")
                 return True
+            elif data.get('day_number') == 1 and data.get('is_completed') == True:
+                # This is the actual behavior - same calendar day, so day_number stays 1
+                results.log_fail("Verify next day", "Backend design issue: day_number not updated after completion on same calendar date")
+                return False
             else:
-                results.log_fail("Verify next day", f"Expected day 2, got day {data.get('day_number')}")
+                results.log_fail("Verify next day", f"Unexpected state: day {data.get('day_number')}, completed: {data.get('is_completed')}")
                 return False
         else:
             results.log_fail("Verify next day", f"Status code: {response.status_code}")
