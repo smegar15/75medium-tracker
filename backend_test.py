@@ -242,6 +242,14 @@ def test_reset_progress():
                     today_data = response.json()
                     if today_data.get('day_number') == 1:
                         results.log_pass("Verify reset to Day 1")
+                        
+                        # Check if tasks are reset (this might fail due to backend bug)
+                        all_tasks_false = all(not task for task in today_data['tasks'].values())
+                        if all_tasks_false:
+                            results.log_pass("Verify tasks reset to false")
+                        else:
+                            results.log_fail("Verify tasks reset to false", "Tasks not reset - backend bug: reset should clear all tasks")
+                        
                         return True
                     else:
                         results.log_fail("Verify reset to Day 1", f"Expected day 1, got day {today_data.get('day_number')}")
