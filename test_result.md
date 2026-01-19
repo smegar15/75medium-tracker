@@ -101,3 +101,137 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the 75 Hard Tracker API with comprehensive functionality testing"
+
+backend:
+  - task: "Health Check Endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/health returns 200 OK - basic connectivity confirmed"
+
+  - task: "Initialize Daily Log"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/today successfully creates and returns daily log with correct structure and default tasks"
+
+  - task: "Task Toggle Functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PUT /api/log/task successfully updates individual tasks (diet, water, reading tested)"
+
+  - task: "Log Update Verification"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Task updates are properly persisted and reflected in subsequent GET /api/today calls"
+
+  - task: "Day Completion Validation"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/complete_day correctly returns 400 when not all tasks are completed"
+
+  - task: "Photo Upload Functionality"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/log/photo accepts base64 data and sets photo_logged task to true"
+
+  - task: "Day Completion Success"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/complete_day returns success when all tasks are completed"
+
+  - task: "Day Increment Logic"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL BUG: After completing a day, GET /api/today still shows the same day_number instead of incrementing. The global state increments but existing daily log is not updated with new day_number."
+
+  - task: "Progress Reset Functionality"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL BUG: POST /api/reset resets day_number and is_completed but does NOT reset tasks to default false state. All completed tasks remain true after reset."
+
+frontend:
+  # No frontend testing performed as per instructions
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Day Increment Logic"
+    - "Progress Reset Functionality"
+  stuck_tasks:
+    - "Day Increment Logic"
+    - "Progress Reset Functionality"
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "Completed comprehensive 75 Hard Tracker API testing. Found 2 critical backend bugs: 1) Day increment logic doesn't update existing daily log day_number after completion, 2) Reset functionality doesn't clear completed tasks. Core functionality (task toggling, validation, photo upload) works correctly."
