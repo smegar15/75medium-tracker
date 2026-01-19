@@ -185,13 +185,17 @@ async def reset_progress():
     await db.state.delete_many({})
     await db.state.insert_one(new_state)
     
-    # We don't delete logs, we just reset the counter. 
-    # But for the current day, we should reset the log to Day 1.
-    
-    # Update today's log to reflect Day 1
+    # Reset today's log tasks and status
     await db.daily_logs.update_one(
         {"date": today_str},
-        {"$set": {"day_number": 1, "is_completed": False}}
+        {
+            "$set": {
+                "day_number": 1, 
+                "is_completed": False,
+                "tasks": get_default_tasks(),
+                "photo_base64": None
+            }
+        }
     )
     
     return {"status": "reset_successful", "current_day": 1}
