@@ -550,8 +550,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
-    marginTop: 2,
-  },
   photoContainer: {
     height: 200,
     backgroundColor: COLORS.background,
