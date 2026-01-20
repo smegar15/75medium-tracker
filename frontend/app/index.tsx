@@ -9,7 +9,8 @@ import {
   ActivityIndicator, 
   Image,
   RefreshControl,
-  SafeAreaView
+  SafeAreaView,
+  Platform
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
