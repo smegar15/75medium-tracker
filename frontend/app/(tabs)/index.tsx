@@ -16,8 +16,29 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Circle } from 'react-native-svg';
-import { Check, Camera, RotateCcw, AlertTriangle } from 'lucide-react-native';
+import { 
+  Check, 
+  Camera, 
+  RotateCcw, 
+  AlertTriangle,
+  Utensils, 
+  Dumbbell, 
+  Droplets, 
+  BookOpen, 
+  Ban, 
+  CircleCheck,
+  Moon,
+  Sun,
+  Star,
+  Heart,
+  Music,
+  Smile,
+  Zap,
+  Coffee,
+  Briefcase
+} from 'lucide-react-native';
 import Constants from 'expo-constants';
+import { useFocusEffect } from 'expo-router';
 
 // Backend URL Setup
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || process.env.EXPO_PUBLIC_BACKEND_URL || "";
@@ -35,14 +56,10 @@ const COLORS = {
   border: '#E5E7EB'
 };
 
-const TASKS_CONFIG = [
-  { id: 'diet', label: 'Follow Diet', sub: 'No cheat meals' },
-  { id: 'workout_1', label: 'Workout 1', sub: '45 mins (Indoor/Outdoor)' },
-  { id: 'workout_2', label: 'Workout 2', sub: '45 mins (Must be different)' },
-  { id: 'water', label: 'Drink Water', sub: '1 Gallon' },
-  { id: 'reading', label: 'Read 10 Pages', sub: 'Non-fiction only' },
-  { id: 'no_alcohol', label: 'No Alcohol', sub: 'Zero tolerance' },
-];
+const ICON_MAP: Record<string, any> = {
+  Utensils, Dumbbell, Droplets, BookOpen, Ban, CircleCheck,
+  Moon, Sun, Star, Heart, Music, Smile, Zap, Coffee, Briefcase
+};
 
 export default function TodayScreen() {
   const [loading, setLoading] = useState(true);
@@ -50,34 +67,46 @@ export default function TodayScreen() {
   const [log, setLog] = useState<any>(null);
   const [dayNumber, setDayNumber] = useState(1);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [challenges, setChallenges] = useState<any[]>([]);
   
   // Custom Modal State
   const [showResetModal, setShowResetModal] = useState(false);
 
-  const fetchTodayLog = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/today`);
-      const data = await response.json();
-      setLog(data);
-      setDayNumber(data.day_number);
-      setIsCompleted(data.is_completed);
+      // Parallel fetch
+      const [challengesRes, logRes] = await Promise.all([
+        fetch(`${API_URL}/challenges`),
+        fetch(`${API_URL}/today`)
+      ]);
+
+      const challengesData = await challengesRes.json();
+      const logData = await logRes.json();
+
+      setChallenges(challengesData.filter((c: any) => c.is_active));
+      setLog(logData);
+      setDayNumber(logData.day_number);
+      setIsCompleted(logData.is_completed);
     } catch (error) {
-      console.error("Error fetching log:", error);
-      Alert.alert("Error", "Failed to load today's log. Check connection.");
+      console.error("Error fetching data:", error);
+      Alert.alert("Error", "Failed to load data. Check connection.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchTodayLog();
-  }, [fetchTodayLog]);
+  // Reload when tab comes into focus (in case settings changed)
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchTodayLog();
-  }, [fetchTodayLog]);
+    loadData();
+  }, [loadData]);
 
   const toggleTask = async (taskId: string) => {
     if (!log) return;
@@ -147,18 +176,17 @@ export default function TodayScreen() {
         setIsCompleted(true);
         Alert.alert("CONGRATULATIONS!", `Day ${dayNumber} Complete!`);
       } else {
-        Alert.alert("Incomplete", res.detail || "Finish all tasks first!");
+        Alert.alert("Incomplete", res.detail || "Finish all active tasks first!");
       }
     } catch (error) {
       Alert.alert("Error", "Failed to complete day.");
     }
   };
 
-  // --- FIXED RESET LOGIC ---
   const confirmReset = async () => {
     try {
       await fetch(`${API_URL}/reset`, { method: 'POST' });
-      fetchTodayLog(); 
+      loadData(); 
       setShowResetModal(false);
       
       if (Platform.OS === 'web') {
@@ -176,8 +204,14 @@ export default function TodayScreen() {
     setShowResetModal(true);
   };
 
+  const renderIcon = (iconName: string, size = 24, color = COLORS.text) => {
+    const IconComponent = ICON_MAP[iconName] || CircleCheck;
+    return <IconComponent size={size} color={color} />;
+  };
+
+  // Check if all *active* challenges are done
   const allTasksDone = log && 
-    TASKS_CONFIG.every(t => log.tasks[t.id]) && 
+    challenges.every(c => log.tasks[c.id]) && 
     log.tasks.photo_logged;
 
   if (loading) {
@@ -244,7 +278,7 @@ export default function TodayScreen() {
         {/* Checklist */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>DAILY TASKS</Text>
-          {TASKS_CONFIG.map((task) => {
+          {challenges.map((task) => {
             const isDone = log?.tasks[task.id];
             return (
               <TouchableOpacity 
@@ -254,11 +288,11 @@ export default function TodayScreen() {
                 disabled={isCompleted}
               >
                 <View style={[styles.checkbox, isDone && styles.checkboxChecked]}>
-                  {isDone && <Check size={16} color="white" />}
+                  {isDone ? <Check size={16} color="white" /> : renderIcon(task.icon, 16, COLORS.textLight)}
                 </View>
                 <View style={styles.taskTextContainer}>
                   <Text style={[styles.taskLabel, isDone && styles.taskLabelDone]}>{task.label}</Text>
-                  <Text style={styles.taskSub}>{task.sub}</Text>
+                  {task.sub ? <Text style={styles.taskSub}>{task.sub}</Text> : null}
                 </View>
               </TouchableOpacity>
             );
