@@ -26,7 +26,7 @@ import {
   isBefore,
   startOfDay
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, X, Check, CircleX, Calendar as CalendarIcon } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, X, Check, CircleX, RotateCcw, Calendar as CalendarIcon } from 'lucide-react-native';
 import Constants from 'expo-constants';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || process.env.EXPO_PUBLIC_BACKEND_URL || "";
