@@ -40,6 +40,8 @@ class Challenge(BaseModel):
 class TaskUpdate(BaseModel):
     task_id: str
     completed: bool
+class PhotoUpload(BaseModel):
+    image_base64: str
 
 class DailyLog(BaseModel):
     date: str  # YYYY-MM-DD
