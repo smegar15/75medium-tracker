@@ -10,7 +10,8 @@ import {
   Image,
   RefreshControl,
   SafeAreaView,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
