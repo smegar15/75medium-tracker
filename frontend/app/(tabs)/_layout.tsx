@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { CircleCheckBig, Calendar, Image as ImageIcon } from 'lucide-react-native';
+import { CircleCheckBig, Calendar, Image as ImageIcon, Settings } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -34,6 +34,13 @@ export default function TabLayout() {
         options={{
           title: 'Gallery',
           tabBarIcon: ({ color, size }) => <ImageIcon size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />
     </Tabs>
