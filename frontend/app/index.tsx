@@ -41,7 +41,6 @@ const TASKS_CONFIG = [
   { id: 'workout_2', label: 'Workout 2', sub: '45 mins (Must be different)' },
   { id: 'water', label: 'Drink Water', sub: '1 Gallon' },
   { id: 'reading', label: 'Read 10 Pages', sub: 'Non-fiction only' },
-  const [showResetModal, setShowResetModal] = useState(false);
   { id: 'no_alcohol', label: 'No Alcohol', sub: 'Zero tolerance' },
 ];
 
@@ -51,6 +50,9 @@ export default function App() {
   const [log, setLog] = useState<any>(null);
   const [dayNumber, setDayNumber] = useState(1);
   const [isCompleted, setIsCompleted] = useState(false);
+  
+  // Custom Modal State
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const fetchTodayLog = useCallback(async () => {
     try {
@@ -79,7 +81,7 @@ export default function App() {
 
   const toggleTask = async (taskId: string) => {
     if (!log) return;
-    if (isCompleted) return; // Prevent editing if day is done
+    if (isCompleted) return; 
 
     const currentVal = log.tasks[taskId];
     const newVal = !currentVal;
@@ -96,7 +98,6 @@ export default function App() {
       });
     } catch (error) {
       console.error("Error updating task:", error);
-      // Revert on error
       setLog({ ...log, tasks: { ...log.tasks, [taskId]: currentVal } });
       Alert.alert("Error", "Failed to update task.");
     }
@@ -116,7 +117,6 @@ export default function App() {
     if (!result.canceled && result.assets && result.assets[0].base64) {
       const base64Img = result.assets[0].base64;
       
-      // Optimistic update
       setLog({ 
         ...log, 
         photo_base64: base64Img, 
@@ -154,21 +154,13 @@ export default function App() {
     }
   };
 
-  const resetProgress = async () => {
-    Alert.alert(
-      "Reset Challenge?",
-      "This will set you back to Day 1. Are you sure you failed?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Yes, I Failed", 
+  // --- FIXED RESET LOGIC ---
   const confirmReset = async () => {
     try {
       await fetch(`${API_URL}/reset`, { method: 'POST' });
-      fetchTodayLog(); // Reload data
+      fetchTodayLog(); 
       setShowResetModal(false);
       
-      // Show success feedback
       if (Platform.OS === 'web') {
         window.alert("Challenge has been reset to Day 1.");
       } else {
@@ -180,21 +172,8 @@ export default function App() {
     }
   };
 
-  const resetProgress = () => {
+  const handleResetPress = () => {
     setShowResetModal(true);
-  };
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await fetch(`${API_URL}/reset`, { method: 'POST' });
-              fetchTodayLog(); // Reload
-            } catch (e) {
-              Alert.alert("Error", "Could not reset.");
-            }
-          }
-        }
-      ]
-    );
   };
 
   const allTasksDone = log && 
@@ -286,7 +265,7 @@ export default function App() {
           })}
         </View>
 
-        {/* Reset Modal */}
+        {/* Reset Modal Implementation */}
         <Modal
           animationType="fade"
           transparent={true}
@@ -319,6 +298,7 @@ export default function App() {
             </View>
           </View>
         </Modal>
+
         {/* Photo Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>PROGRESS PHOTO</Text>
@@ -360,8 +340,8 @@ export default function App() {
           </Text>
         </TouchableOpacity>
 
-        {/* Reset */}
-        <TouchableOpacity style={styles.resetButton} onPress={resetProgress}>
+        {/* Reset Button */}
+        <TouchableOpacity style={styles.resetButton} onPress={handleResetPress}>
           <RotateCcw size={16} color={COLORS.danger} style={{marginRight: 6}} />
           <Text style={styles.resetText}>Reset Challenge</Text>
         </TouchableOpacity>
