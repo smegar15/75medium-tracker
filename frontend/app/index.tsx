@@ -286,6 +286,39 @@ export default function App() {
           })}
         </View>
 
+        {/* Reset Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={showResetModal}
+          onRequestClose={() => setShowResetModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <AlertTriangle color={COLORS.danger} size={32} />
+                <Text style={styles.modalTitle}>Reset Challenge?</Text>
+              </View>
+              <Text style={styles.modalText}>
+                This will set you back to Day 1. Are you sure you failed?
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowResetModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.confirmButton]}
+                  onPress={confirmReset}
+                >
+                  <Text style={styles.confirmButtonText}>Yes, I Failed</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
         {/* Photo Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>PROGRESS PHOTO</Text>
