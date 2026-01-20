@@ -482,6 +482,8 @@ const styles = StyleSheet.create({
   taskSub: {
     fontSize: 12,
     color: COLORS.textLight,
+    marginTop: 2,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
