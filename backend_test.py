@@ -572,15 +572,17 @@ def run_all_tests():
 if __name__ == "__main__":
     results = TestResults()
     
-    # Run visualization endpoint tests as requested
-    success = run_visualization_tests()
+    # Run UI functionality support tests as requested in review
+    success = test_ui_functionality_support()
     
     # Print final summary
     all_passed = results.summary()
     
     if all_passed:
-        print("\n🎉 All visualization endpoint tests passed!")
+        print("\n🎉 All UI functionality backend support tests passed!")
+        print("\nNOTE: Frontend UI testing is not performed by this testing agent.")
+        print("This test verifies that backend APIs support the UI functionality correctly.")
         sys.exit(0)
     else:
-        print("\n💥 Some visualization endpoint tests failed. Check the errors above.")
+        print("\n💥 Some UI functionality backend support tests failed. Check the errors above.")
         sys.exit(1)
