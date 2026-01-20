@@ -275,6 +275,123 @@ def test_reset_progress():
         results.log_fail("Reset progress", f"Error: {str(e)}")
         return False
 
+def test_history_endpoint():
+    """Test GET /api/history endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/history", timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Verify it's a list
+            if not isinstance(data, list):
+                results.log_fail("GET /history", f"Expected list, got {type(data)}")
+                return False
+            
+            results.log_pass(f"GET /history - returned {len(data)} logs")
+            
+            # If we have logs, verify structure
+            if len(data) > 0:
+                first_log = data[0]
+                required_fields = ['date', 'tasks', 'day_number', 'is_completed']
+                for field in required_fields:
+                    if field not in first_log:
+                        results.log_fail("GET /history structure", f"Missing field: {field}")
+                        return False
+                
+                # Verify photo_base64 is excluded
+                if 'photo_base64' in first_log:
+                    results.log_fail("GET /history structure", "photo_base64 should be excluded")
+                    return False
+                
+                results.log_pass("GET /history - structure correct")
+            
+            return True
+        else:
+            results.log_fail("GET /history", f"Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        results.log_fail("GET /history", f"Error: {str(e)}")
+        return False
+
+def test_photos_endpoint():
+    """Test GET /api/photos endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/photos", timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Verify it's a list
+            if not isinstance(data, list):
+                results.log_fail("GET /photos", f"Expected list, got {type(data)}")
+                return False
+            
+            results.log_pass(f"GET /photos - returned {len(data)} photos")
+            
+            # If we have photos, verify structure
+            if len(data) > 0:
+                first_photo = data[0]
+                required_fields = ['day_number', 'photo_base64', 'date']
+                for field in required_fields:
+                    if field not in first_photo:
+                        results.log_fail("GET /photos structure", f"Missing field: {field}")
+                        return False
+                
+                # Verify photo_base64 is present and not None
+                if first_photo.get('photo_base64') is None:
+                    results.log_fail("GET /photos structure", "photo_base64 should not be None")
+                    return False
+                
+                results.log_pass("GET /photos - structure correct")
+            
+            return True
+        else:
+            results.log_fail("GET /photos", f"Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        results.log_fail("GET /photos", f"Error: {str(e)}")
+        return False
+
+def run_visualization_tests():
+    """Run tests for the new visualization endpoints"""
+    print("🚀 Testing New Visualization Endpoints")
+    print(f"Testing against: {BASE_URL}")
+    print("="*50)
+    
+    # Test basic connectivity first
+    if not test_health_check():
+        print("❌ Health check failed - aborting tests")
+        return False
+    
+    # Ensure we have some data by initializing today
+    initial_data = test_get_today_initial()
+    if not initial_data:
+        print("❌ Failed to initialize day - aborting tests")
+        return False
+    
+    # Add some task data and photo to ensure we have content to test
+    test_toggle_tasks()
+    test_complete_all_tasks()  # This includes photo upload
+    
+    # Now test the visualization endpoints
+    print("\n📊 Testing Visualization Endpoints:")
+    
+    # 1. Test GET /api/history
+    if not test_history_endpoint():
+        print("❌ History endpoint test failed")
+        return False
+    
+    # 2. Test GET /api/photos  
+    if not test_photos_endpoint():
+        print("❌ Photos endpoint test failed")
+        return False
+    
+    # 3. Verify GET /api/today still works
+    if not test_get_today_initial():
+        print("❌ Today endpoint test failed")
+        return False
+    
+    return True
+
 def run_all_tests():
     """Run all tests in sequence"""
     print("🚀 Starting 75 Hard Tracker API Tests")
