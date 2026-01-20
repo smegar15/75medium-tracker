@@ -117,6 +117,18 @@ backend:
         agent: "testing"
         comment: "GET /api/health returns 200 OK - basic connectivity confirmed"
 
+  - task: "Challenge Management API"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CHALLENGE MANAGEMENT API TESTING COMPLETE: All 9/9 tests passed. Successfully tested GET /api/challenges (returns 6 default challenges), POST /api/challenges (creates new challenge), PUT /api/challenges/{id} (toggles is_active), DELETE /api/challenges/{id} (removes challenge). Verified integration with GET /api/today - inactive challenges are properly removed from tasks dictionary. Full CRUD operations working correctly."
+
   - task: "Initialize Daily Log"
     implemented: true
     working: true
