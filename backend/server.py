@@ -199,3 +199,23 @@ async def reset_progress():
     )
     
     return {"status": "reset_successful", "current_day": 1}
+
+# --- NEW ENDPOINTS FOR VISUALIZATION LAYERS ---
+
+@app.get("/api/history")
+async def get_history():
+    # Return all logs sorted by date to build the calendar
+    # Exclude photo_base64 to keep response light
+    cursor = db.daily_logs.find({}, {"_id": 0, "photo_base64": 0}).sort("date", 1)
+    logs = await cursor.to_list(length=365)
+    return logs
+
+@app.get("/api/photos")
+async def get_photos():
+    # Return logs that have photos, sorted by day number
+    cursor = db.daily_logs.find(
+        {"photo_base64": {"$ne": None}}, 
+        {"_id": 0, "day_number": 1, "photo_base64": 1, "date": 1}
+    ).sort("day_number", 1)
+    photos = await cursor.to_list(length=365)
+    return photos
