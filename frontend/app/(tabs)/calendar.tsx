@@ -24,9 +24,11 @@ import {
   isSameDay, 
   isAfter, 
   isBefore,
-  startOfDay
+  startOfDay,
+  subDays,
+  parseISO
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, X, Check, CircleX, RotateCcw, Calendar as CalendarIcon } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, X, Check, CircleX, RotateCcw, Calendar as CalendarIcon, Flame, Trophy, Activity } from 'lucide-react-native';
 import Constants from 'expo-constants';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || process.env.EXPO_PUBLIC_BACKEND_URL || "";
@@ -38,6 +40,7 @@ const COLORS = {
   accent: '#4ADE80', // Green
   danger: '#EF4444', // Red
   warning: '#F59E0B', // Orange
+  info: '#3B82F6', // Blue
   background: '#F5F5F5',
   card: '#FFFFFF',
   text: '#1F2937',
@@ -92,6 +95,48 @@ export default function CalendarScreen() {
     });
     return map;
   }, [history]);
+
+  // Calculate Stats
+  const stats = useMemo(() => {
+    if (!history.length) return { streak: 0, totalWins: 0, successRate: 0 };
+
+    // Total Wins
+    const totalWins = history.filter(day => day.is_completed).length;
+    
+    // Success Rate
+    const daysLogged = history.length;
+    const successRate = daysLogged > 0 ? Math.round((totalWins / daysLogged) * 100) : 0;
+
+    // Streak Calculation
+    // Create a Set of completed dates strings for O(1) lookup
+    const completedDates = new Set(
+      history.filter(d => d.is_completed).map(d => d.date)
+    );
+
+    let streak = 0;
+    const today = new Date();
+    // Check up to 75 days back (max challenge length) or just generous amount
+    for (let i = 0; i < 365; i++) {
+      const dateToCheck = subDays(today, i);
+      const dateStr = format(dateToCheck, 'yyyy-MM-dd');
+      
+      if (completedDates.has(dateStr)) {
+        streak++;
+      } else {
+        // If it's Today and not complete, don't break streak yet (it's pending)
+        // If it's Yesterday or before and not complete, break streak
+        if (i === 0) {
+          // Today is not complete, continue to check yesterday
+          continue; 
+        } else {
+          // Past day incomplete -> streak over
+          break;
+        }
+      }
+    }
+
+    return { streak, totalWins, successRate };
+  }, [history, historyMap]);
 
   // Calendar Logic
   const generateCalendarDays = () => {
@@ -156,11 +201,6 @@ export default function CalendarScreen() {
     return (
       <View style={styles.taskList}>
         {Object.entries(TASKS_LABELS).map(([key, label]) => {
-          // Check task status
-          // Note: photo_logged is inside tasks object or at root depending on backend
-          // Based on previous code: tasks object has 'photo_logged' key updated in toggleTask
-          // BUT backend DailyLog model has photo_base64 separately. 
-          // Let's check the tasks dictionary first.
           const isDone = log.tasks[key];
           
           return (
@@ -193,6 +233,36 @@ export default function CalendarScreen() {
         <TouchableOpacity onPress={fetchHistory} style={styles.refreshButton}>
           <RotateCcw size={20} color={COLORS.primary} />
         </TouchableOpacity>
+      </View>
+
+      {/* Stats Dashboard */}
+      <View style={styles.statsContainer}>
+        {/* Streak Card */}
+        <View style={styles.statCard}>
+          <View style={styles.statHeader}>
+            <Flame size={16} color={COLORS.warning} fill={COLORS.warning} />
+            <Text style={styles.statLabel}>Streak</Text>
+          </View>
+          <Text style={styles.statValue}>{stats.streak}</Text>
+        </View>
+
+        {/* Total Wins Card */}
+        <View style={styles.statCard}>
+          <View style={styles.statHeader}>
+            <Trophy size={16} color="#EAB308" fill="#EAB308" />
+            <Text style={styles.statLabel}>Wins</Text>
+          </View>
+          <Text style={styles.statValue}>{stats.totalWins}</Text>
+        </View>
+
+        {/* Success Rate Card */}
+        <View style={styles.statCard}>
+          <View style={styles.statHeader}>
+            <Activity size={16} color={COLORS.info} />
+            <Text style={styles.statLabel}>Success</Text>
+          </View>
+          <Text style={styles.statValue}>{stats.successRate}%</Text>
+        </View>
       </View>
 
       {/* Calendar Card */}
@@ -328,6 +398,42 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '900',
     color: COLORS.primary,
+  },
+  // Stats Styles
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textLight,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: COLORS.text,
   },
   calendarCard: {
     backgroundColor: COLORS.card,
