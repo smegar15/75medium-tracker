@@ -351,6 +351,128 @@ def test_photos_endpoint():
         results.log_fail("GET /photos", f"Error: {str(e)}")
         return False
 
+def test_calendar_ui_support():
+    """Test calendar date generation and status logic support"""
+    try:
+        # Get history data that calendar uses
+        response = requests.get(f"{BASE_URL}/history", timeout=10)
+        if response.status_code != 200:
+            results.log_fail("Calendar UI Support - History", f"Status code: {response.status_code}")
+            return False
+        
+        history_data = response.json()
+        
+        # Verify calendar can determine day status from history data
+        if len(history_data) > 0:
+            log = history_data[0]
+            
+            # Calendar needs these fields to determine status
+            status_fields = ['is_completed', 'tasks', 'date']
+            for field in status_fields:
+                if field not in log:
+                    results.log_fail("Calendar UI Support - Status Logic", f"Missing field for status: {field}")
+                    return False
+            
+            # Calendar needs to check all tasks completion
+            if not isinstance(log['tasks'], dict):
+                results.log_fail("Calendar UI Support - Status Logic", "Tasks must be dict for status checking")
+                return False
+            
+            results.log_pass("Calendar UI Support - Status Logic")
+        else:
+            results.log_pass("Calendar UI Support - Status Logic (no data)")
+        
+        return True
+    except Exception as e:
+        results.log_fail("Calendar UI Support", f"Error: {str(e)}")
+        return False
+
+def test_modal_content_support():
+    """Test modal content rendering support"""
+    try:
+        # Get history data that modal uses
+        response = requests.get(f"{BASE_URL}/history", timeout=10)
+        if response.status_code != 200:
+            results.log_fail("Modal Content Support - History", f"Status code: {response.status_code}")
+            return False
+        
+        history_data = response.json()
+        
+        if len(history_data) > 0:
+            log = history_data[0]
+            
+            # Modal needs these fields for content rendering
+            modal_fields = ['date', 'tasks', 'is_completed', 'day_number']
+            for field in modal_fields:
+                if field not in log:
+                    results.log_fail("Modal Content Support", f"Missing field for modal: {field}")
+                    return False
+            
+            # Modal needs individual task status for rendering
+            expected_tasks = ['diet', 'workout_1', 'workout_2', 'water', 'reading', 'no_alcohol', 'photo_logged']
+            for task in expected_tasks:
+                if task not in log['tasks']:
+                    results.log_fail("Modal Content Support", f"Missing task for modal: {task}")
+                    return False
+            
+            results.log_pass("Modal Content Support")
+        else:
+            results.log_pass("Modal Content Support (no data)")
+        
+        return True
+    except Exception as e:
+        results.log_fail("Modal Content Support", f"Error: {str(e)}")
+        return False
+
+def test_ui_functionality_support():
+    """Test UI functionality support as requested in review"""
+    print("🚀 Testing UI Functionality Backend Support")
+    print(f"Testing against: {BASE_URL}")
+    print("="*50)
+    
+    # Test basic connectivity first
+    if not test_health_check():
+        print("❌ Health check failed - aborting tests")
+        return False
+    
+    # Ensure we have some data by initializing today
+    initial_data = test_get_today_initial()
+    if not initial_data:
+        print("❌ Failed to initialize day - aborting tests")
+        return False
+    
+    # Add some task data to ensure we have content to test
+    test_toggle_tasks()
+    test_complete_all_tasks()  # This includes photo upload
+    
+    print("\n📱 Testing UI Backend Support:")
+    
+    # 1. Verify GET /api/history is being called correctly
+    print("\n1️⃣ Testing GET /api/history API call support...")
+    if not test_history_endpoint():
+        print("❌ History endpoint test failed")
+        return False
+    
+    # 2. Verify calendar date generation and status logic support
+    print("\n2️⃣ Testing calendar date generation and status logic support...")
+    if not test_calendar_ui_support():
+        print("❌ Calendar UI support test failed")
+        return False
+    
+    # 3. Check modal content rendering support (data availability)
+    print("\n3️⃣ Testing modal content rendering support...")
+    if not test_modal_content_support():
+        print("❌ Modal content support test failed")
+        return False
+    
+    # 4. Verify today endpoint still works (for current day data)
+    print("\n4️⃣ Testing current day data support...")
+    if not test_get_today_initial():
+        print("❌ Today endpoint test failed")
+        return False
+    
+    return True
+
 def run_visualization_tests():
     """Run tests for the new visualization endpoints"""
     print("🚀 Testing New Visualization Endpoints")
