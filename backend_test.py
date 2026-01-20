@@ -450,14 +450,15 @@ def run_all_tests():
 if __name__ == "__main__":
     results = TestResults()
     
-    success = run_all_tests()
+    # Run visualization endpoint tests as requested
+    success = run_visualization_tests()
     
     # Print final summary
     all_passed = results.summary()
     
     if all_passed:
-        print("\n🎉 All tests passed! 75 Hard Tracker API is working correctly.")
+        print("\n🎉 All visualization endpoint tests passed!")
         sys.exit(0)
     else:
-        print("\n💥 Some tests failed. Check the errors above.")
+        print("\n💥 Some visualization endpoint tests failed. Check the errors above.")
         sys.exit(1)
