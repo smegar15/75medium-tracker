@@ -41,6 +41,7 @@ const TASKS_CONFIG = [
   { id: 'workout_2', label: 'Workout 2', sub: '45 mins (Must be different)' },
   { id: 'water', label: 'Drink Water', sub: '1 Gallon' },
   { id: 'reading', label: 'Read 10 Pages', sub: 'Non-fiction only' },
+  const [showResetModal, setShowResetModal] = useState(false);
   { id: 'no_alcohol', label: 'No Alcohol', sub: 'Zero tolerance' },
 ];
 
