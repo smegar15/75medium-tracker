@@ -424,6 +424,190 @@ def test_modal_content_support():
         results.log_fail("Modal Content Support", f"Error: {str(e)}")
         return False
 
+def test_challenge_management_api():
+    """Test the complete Challenge Management API workflow"""
+    print("🧪 Testing Challenge Management API")
+    print("=" * 50)
+    
+    # Test 1: GET /api/challenges (should return default challenges)
+    print("\n1️⃣ Testing GET /api/challenges (default challenges)")
+    try:
+        response = requests.get(f"{BASE_URL}/challenges", timeout=10)
+        if response.status_code == 200:
+            challenges = response.json()
+            results.log_pass(f"GET /challenges - Found {len(challenges)} default challenges")
+            
+            # Verify default challenges structure
+            expected_defaults = ["diet", "workout_1", "workout_2", "water", "reading", "no_alcohol"]
+            found_ids = [c.get("id") for c in challenges]
+            
+            missing_defaults = []
+            for expected_id in expected_defaults:
+                if expected_id not in found_ids:
+                    missing_defaults.append(expected_id)
+            
+            if missing_defaults:
+                results.log_fail("GET /challenges - Default challenges", f"Missing: {missing_defaults}")
+                return False
+        else:
+            results.log_fail("GET /challenges", f"Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        results.log_fail("GET /challenges", f"Error: {str(e)}")
+        return False
+    
+    # Test 2: POST /api/challenges (create new challenge)
+    print("\n2️⃣ Testing POST /api/challenges (create new challenge)")
+    new_challenge = {
+        "id": "run_1_mile",
+        "label": "Run 1 Mile", 
+        "sub": "Daily cardio challenge",
+        "icon": "Activity",
+        "is_active": True
+    }
+    
+    try:
+        response = requests.post(f"{BASE_URL}/challenges", json=new_challenge, timeout=10)
+        if response.status_code == 200:
+            results.log_pass("POST /challenges - Create new challenge")
+        else:
+            results.log_fail("POST /challenges", f"Status code: {response.status_code}, Response: {response.text}")
+            return False
+    except Exception as e:
+        results.log_fail("POST /challenges", f"Error: {str(e)}")
+        return False
+    
+    # Test 3: Verify new challenge appears in GET /api/challenges
+    print("\n3️⃣ Testing GET /api/challenges (verify new challenge appears)")
+    try:
+        response = requests.get(f"{BASE_URL}/challenges", timeout=10)
+        if response.status_code == 200:
+            challenges = response.json()
+            found_new_challenge = any(c.get("id") == "run_1_mile" for c in challenges)
+            
+            if found_new_challenge:
+                results.log_pass("GET /challenges - New challenge appears")
+            else:
+                results.log_fail("GET /challenges - New challenge", "New challenge 'run_1_mile' not found")
+                return False
+        else:
+            results.log_fail("GET /challenges verification", f"Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        results.log_fail("GET /challenges verification", f"Error: {str(e)}")
+        return False
+    
+    # Test 4: GET /api/today and verify new challenge is in tasks dictionary
+    print("\n4️⃣ Testing GET /api/today (verify new challenge in tasks)")
+    try:
+        response = requests.get(f"{BASE_URL}/today", timeout=10)
+        if response.status_code == 200:
+            today_log = response.json()
+            tasks = today_log.get("tasks", {})
+            
+            if "run_1_mile" in tasks:
+                results.log_pass("GET /today - New challenge in tasks")
+            else:
+                results.log_fail("GET /today - New challenge", f"New challenge not in tasks. Available: {list(tasks.keys())}")
+                return False
+        else:
+            results.log_fail("GET /today verification", f"Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        results.log_fail("GET /today verification", f"Error: {str(e)}")
+        return False
+    
+    # Test 5: PUT /api/challenges/{id} to toggle is_active=false
+    print("\n5️⃣ Testing PUT /api/challenges/run_1_mile (set is_active=false)")
+    try:
+        update_data = {"is_active": False}
+        response = requests.put(f"{BASE_URL}/challenges/run_1_mile", json=update_data, timeout=10)
+        if response.status_code == 200:
+            results.log_pass("PUT /challenges - Toggle inactive")
+        else:
+            results.log_fail("PUT /challenges", f"Status code: {response.status_code}, Response: {response.text}")
+            return False
+    except Exception as e:
+        results.log_fail("PUT /challenges", f"Error: {str(e)}")
+        return False
+    
+    # Test 6: Verify GET /api/challenges shows it as inactive
+    print("\n6️⃣ Testing GET /api/challenges (verify challenge is inactive)")
+    try:
+        response = requests.get(f"{BASE_URL}/challenges", timeout=10)
+        if response.status_code == 200:
+            challenges = response.json()
+            inactive_challenge = next((c for c in challenges if c.get("id") == "run_1_mile"), None)
+            
+            if inactive_challenge and inactive_challenge.get("is_active") == False:
+                results.log_pass("GET /challenges - Challenge marked inactive")
+            else:
+                results.log_fail("GET /challenges - Inactive status", "Challenge not marked as inactive")
+                return False
+        else:
+            results.log_fail("GET /challenges inactive check", f"Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        results.log_fail("GET /challenges inactive check", f"Error: {str(e)}")
+        return False
+    
+    # Test 7: GET /api/today again - verify how it handles inactive tasks
+    print("\n7️⃣ Testing GET /api/today (verify inactive task handling)")
+    try:
+        response = requests.get(f"{BASE_URL}/today", timeout=10)
+        if response.status_code == 200:
+            today_log = response.json()
+            tasks = today_log.get("tasks", {})
+            
+            # Check if inactive challenge is still in tasks or removed
+            if "run_1_mile" in tasks:
+                results.log_pass("GET /today - Inactive task handling (kept in DB)")
+                print("   ℹ️  Note: Backend keeps inactive tasks in DB, frontend should filter them")
+            else:
+                results.log_pass("GET /today - Inactive task handling (removed from tasks)")
+        else:
+            results.log_fail("GET /today inactive handling", f"Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        results.log_fail("GET /today inactive handling", f"Error: {str(e)}")
+        return False
+    
+    # Test 8: DELETE /api/challenges/{id}
+    print("\n8️⃣ Testing DELETE /api/challenges/run_1_mile")
+    try:
+        response = requests.delete(f"{BASE_URL}/challenges/run_1_mile", timeout=10)
+        if response.status_code == 200:
+            results.log_pass("DELETE /challenges - Challenge deleted")
+        else:
+            results.log_fail("DELETE /challenges", f"Status code: {response.status_code}, Response: {response.text}")
+            return False
+    except Exception as e:
+        results.log_fail("DELETE /challenges", f"Error: {str(e)}")
+        return False
+    
+    # Test 9: Verify it's gone from GET /api/challenges
+    print("\n9️⃣ Testing GET /api/challenges (verify challenge is deleted)")
+    try:
+        response = requests.get(f"{BASE_URL}/challenges", timeout=10)
+        if response.status_code == 200:
+            challenges = response.json()
+            deleted_challenge = any(c.get("id") == "run_1_mile" for c in challenges)
+            
+            if not deleted_challenge:
+                results.log_pass("GET /challenges - Challenge successfully deleted")
+            else:
+                results.log_fail("GET /challenges - Delete verification", "Challenge still exists after deletion")
+                return False
+        else:
+            results.log_fail("GET /challenges delete verification", f"Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        results.log_fail("GET /challenges delete verification", f"Error: {str(e)}")
+        return False
+    
+    print("\n🎉 All Challenge Management API tests completed successfully!")
+    return True
+
 def test_ui_functionality_support():
     """Test UI functionality support as requested in review"""
     print("🚀 Testing UI Functionality Backend Support")
