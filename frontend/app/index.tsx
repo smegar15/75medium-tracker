@@ -162,6 +162,27 @@ export default function App() {
         { text: "Cancel", style: "cancel" },
         { 
           text: "Yes, I Failed", 
+  const confirmReset = async () => {
+    try {
+      await fetch(`${API_URL}/reset`, { method: 'POST' });
+      fetchTodayLog(); // Reload data
+      setShowResetModal(false);
+      
+      // Show success feedback
+      if (Platform.OS === 'web') {
+        window.alert("Challenge has been reset to Day 1.");
+      } else {
+        Alert.alert("Reset Complete", "Challenge has been reset to Day 1.");
+      }
+    } catch (e) {
+      console.error("Reset error:", e);
+      Alert.alert("Error", "Could not reset.");
+    }
+  };
+
+  const resetProgress = () => {
+    setShowResetModal(true);
+  };
           style: 'destructive',
           onPress: async () => {
             try {
